@@ -1,10 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET || process.env.JWT_SECRET;
-if (!CAPTCHA_SECRET) {
-  throw new Error("環境變數 CAPTCHA_SECRET / JWT_SECRET 未設定");
+function getSecretKey(): Uint8Array {
+  const secret = process.env.CAPTCHA_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("環境變數 CAPTCHA_SECRET / JWT_SECRET 未設定");
+  }
+  return new TextEncoder().encode(secret);
 }
-const secretKey = new TextEncoder().encode(CAPTCHA_SECRET);
 
 export const CAPTCHA_COOKIE = "captcha";
 
@@ -34,7 +36,7 @@ export async function signCaptcha(text: string): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("5m")
-    .sign(secretKey);
+    .sign(getSecretKey());
 }
 
 export async function verifyCaptcha(
@@ -43,7 +45,7 @@ export async function verifyCaptcha(
 ): Promise<boolean> {
   if (!token || !input) return false;
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, getSecretKey());
     return (payload as { code?: string }).code === input.trim().toLowerCase();
   } catch {
     return false;

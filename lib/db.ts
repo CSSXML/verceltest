@@ -6,28 +6,28 @@ declare global {
   var _pgPool: Pool | undefined;
 }
 
-const connectionString = process.env.POSTGRES_URL;
+function getPool(): Pool {
+  if (global._pgPool) return global._pgPool;
 
-if (!connectionString) {
-  throw new Error("環境變數 POSTGRES_URL 未設定");
-}
+  const connectionString = process.env.POSTGRES_URL;
+  if (!connectionString) {
+    throw new Error("環境變數 POSTGRES_URL 未設定");
+  }
 
-export const pool =
-  global._pgPool ??
-  new Pool({
+  const pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
     max: 5,
   });
 
-if (process.env.NODE_ENV !== "production") {
   global._pgPool = pool;
+  return pool;
 }
 
 export async function query<T = any>(
   text: string,
   params: any[] = []
 ): Promise<T[]> {
-  const res = await pool.query(text, params);
+  const res = await getPool().query(text, params);
   return res.rows as T[];
 }

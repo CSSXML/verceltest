@@ -1,10 +1,12 @@
 import { SignJWT, jwtVerify, JWTPayload } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("環境變數 JWT_SECRET 未設定");
+function getSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("環境變數 JWT_SECRET 未設定");
+  }
+  return new TextEncoder().encode(secret);
 }
-const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 export interface SessionPayload extends JWTPayload {
   uid: number;
@@ -12,7 +14,7 @@ export interface SessionPayload extends JWTPayload {
   role: "sales" | "admin";
 }
 
-const COOKIE_NAME = "session";
+export const SESSION_COOKIE = "session";
 
 export async function signSession(payload: {
   uid: number;
@@ -23,7 +25,7 @@ export async function signSession(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("8h")
-    .sign(secretKey);
+    .sign(getSecretKey());
 }
 
 export async function verifySession(
@@ -31,11 +33,9 @@ export async function verifySession(
 ): Promise<SessionPayload | null> {
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, getSecretKey());
     return payload as SessionPayload;
   } catch {
     return null;
   }
 }
-
-export const SESSION_COOKIE = COOKIE_NAME;
