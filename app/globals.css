@@ -1,0 +1,240 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif;
+  background: #f4f6f8;
+  color: #1f2933;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ---- 登入頁 ---- */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+}
+
+.login-card {
+  width: 360px;
+}
+
+.login-card h1 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #52606d;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd2d9;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.captcha-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.captcha-row .captcha-img {
+  border: 1px solid #cbd2d9;
+  border-radius: 8px;
+  height: 44px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #1d4ed8;
+}
+
+.btn.secondary {
+  background: #64748b;
+}
+
+.btn.danger {
+  background: #dc2626;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 12px;
+  min-height: 18px;
+}
+
+/* ---- topbar ---- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.topbar .actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---- KPI ---- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.kpi .label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.kpi .value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* ---- charts ---- */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-box h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+/* ---- table ---- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid #eef2f6;
+  font-size: 14px;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.right {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- forms in admin ---- */
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.form-row .field {
+  margin-bottom: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e2e8f0;
+}
+
+.badge.admin {
+  background: #fde68a;
+}
