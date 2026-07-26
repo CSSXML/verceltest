@@ -21,7 +21,8 @@ export async function GET() {
     return NextResponse.json({ error: "未授權" }, { status: 403 });
   }
   const rows = await query(
-    `SELECT id, account, mail, role FROM member ORDER BY id`
+    `SELECT id, account, mail, role, must_change_password
+       FROM member ORDER BY id`
   );
   return NextResponse.json({ members: rows });
 }
@@ -32,14 +33,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "未授權" }, { status: 403 });
   }
 
-  let body: { account?: string; mail?: string; password?: string; role?: string };
+  let body: {
+    account?: string;
+    mail?: string;
+    password?: string;
+    role?: string;
+    mustChange?: boolean;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "請求格式錯誤" }, { status: 400 });
   }
 
-  const { account, mail, password, role } = body;
+  const { account, mail, password, role, mustChange } = body;
   if (!account || !mail || !password) {
     return NextResponse.json(
       { error: "account、mail、password 為必填" },
@@ -54,13 +61,15 @@ export async function POST(req: NextRequest) {
 
   const finalRole = role === "admin" ? "admin" : "sales";
 
+  // 新建帳號預設要求首次登入自行變更密碼，管理員可取消勾選
+  const finalMustChange = mustChange !== false;
+
   try {
-    // 新建帳號一律要求首次登入自行變更密碼
     const rows = await query(
       `INSERT INTO member (account, mail, password, role, must_change_password)
-       VALUES ($1, $2, crypt($3, gen_salt('bf')), $4, true)
-       RETURNING id, account, mail, role`,
-      [account, mail, password, finalRole]
+       VALUES ($1, $2, crypt($3, gen_salt('bf')), $4, $5)
+       RETURNING id, account, mail, role, must_change_password`,
+      [account, mail, password, finalRole, finalMustChange]
     );
     return NextResponse.json({ member: rows[0] }, { status: 201 });
   } catch (e: any) {

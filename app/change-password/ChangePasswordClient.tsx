@@ -14,9 +14,13 @@ export default function ChangePasswordClient({ account }: { account: string }) {
   // 即時規則檢查（顯示用；實際以伺服器驗證為準）
   const checks = [
     { ok: password.length >= 8, text: "至少 8 碼" },
-    { ok: /[A-Z]/.test(password), text: "含大寫英文" },
-    { ok: /[a-z]/.test(password), text: "含小寫英文" },
+    { ok: /[A-Z]/.test(password), text: "含大寫英文字母" },
+    { ok: /[a-z]/.test(password), text: "含小寫英文字母" },
     { ok: /[0-9]/.test(password), text: "含數字" },
+    {
+      ok: confirm.length > 0 && password === confirm,
+      text: "兩次輸入一致",
+    },
   ];
 
   const submit = async (e: React.FormEvent) => {
@@ -46,53 +50,93 @@ export default function ChangePasswordClient({ account }: { account: string }) {
   return (
     <div className="login-wrap">
       <form className="card login-card" onSubmit={submit}>
-        <h1>首次登入 — 請設定新密碼</h1>
-        <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16, textAlign: "center" }}>
-          帳號：{account}
+        <div className="login-logo">
+          <i className="fa-solid fa-user-shield" />
+        </div>
+        <h1>首次登入 · 設定新密碼</h1>
+        <p className="login-sub">
+          <i className="fa-solid fa-user" /> 帳號：{account}
         </p>
-        <div className="error">{error}</div>
+
+        {error && (
+          <div className="error">
+            <i className="fa-solid fa-circle-exclamation" />
+            {error}
+          </div>
+        )}
 
         <div className="field">
-          <label>新密碼</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-          />
+          <label>
+            <i className="fa-solid fa-lock" />
+            新密碼
+          </label>
+          <div className="input-icon">
+            <i className="fa-solid fa-key" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="請設定新密碼"
+              autoComplete="new-password"
+            />
+          </div>
         </div>
 
         <div className="field">
-          <label>確認新密碼</label>
-          <input
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            autoComplete="new-password"
-          />
+          <label>
+            <i className="fa-solid fa-lock" />
+            確認新密碼
+          </label>
+          <div className="input-icon">
+            <i className="fa-solid fa-check-double" />
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="再輸入一次"
+              autoComplete="new-password"
+            />
+          </div>
         </div>
 
-        <ul style={{ listStyle: "none", fontSize: 13, marginBottom: 16 }}>
+        <ul className="rule-list">
           {checks.map((c) => (
-            <li key={c.text} style={{ color: c.ok ? "#059669" : "#94a3b8" }}>
-              {c.ok ? "✓" : "○"} {c.text}
+            <li key={c.text} className={c.ok ? "done" : ""}>
+              <i
+                className={
+                  c.ok ? "fa-solid fa-circle-check" : "fa-regular fa-circle"
+                }
+              />
+              {c.text}
             </li>
           ))}
-          <li
-            style={{
-              color:
-                confirm.length > 0 && password === confirm ? "#059669" : "#94a3b8",
-            }}
-          >
-            {confirm.length > 0 && password === confirm ? "✓" : "○"} 兩次輸入一致
-          </li>
         </ul>
 
         <button className="btn btn-block" type="submit" disabled={loading}>
-          {loading ? "設定中…" : "確認變更"}
+          {loading ? (
+            <>
+              <i className="fa-solid fa-spinner fa-spin" />
+              設定中…
+            </>
+          ) : (
+            <>
+              <i className="fa-solid fa-floppy-disk" />
+              確認變更
+            </>
+          )}
         </button>
 
-        <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 12 }}>
+        <p
+          style={{
+            fontSize: 11.5,
+            color: "#94a3b8",
+            marginTop: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <i className="fa-solid fa-circle-info" />
           {PASSWORD_RULE}
         </p>
       </form>

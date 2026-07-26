@@ -30,14 +30,20 @@ export async function PUT(
     return NextResponse.json({ error: "無效的 id" }, { status: 400 });
   }
 
-  let body: { account?: string; mail?: string; password?: string; role?: string };
+  let body: {
+    account?: string;
+    mail?: string;
+    password?: string;
+    role?: string;
+    mustChange?: boolean;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "請求格式錯誤" }, { status: 400 });
   }
 
-  const { account, mail, password, role } = body;
+  const { account, mail, password, role, mustChange } = body;
   if (!account || !mail) {
     return NextResponse.json({ error: "account、mail 為必填" }, { status: 400 });
   }
@@ -51,24 +57,28 @@ export async function PUT(
     }
   }
 
+  const finalMustChange = mustChange === true;
+
   try {
     let rows;
     if (password && password.trim() !== "") {
       rows = await query(
         `UPDATE member
             SET account = $1, mail = $2, role = $3,
-                password = crypt($4, gen_salt('bf'))
-          WHERE id = $5
-        RETURNING id, account, mail, role`,
-        [account, mail, finalRole, password, id]
+                password = crypt($4, gen_salt('bf')),
+                must_change_password = $5
+          WHERE id = $6
+        RETURNING id, account, mail, role, must_change_password`,
+        [account, mail, finalRole, password, finalMustChange, id]
       );
     } else {
       rows = await query(
         `UPDATE member
-            SET account = $1, mail = $2, role = $3
-          WHERE id = $4
-        RETURNING id, account, mail, role`,
-        [account, mail, finalRole, id]
+            SET account = $1, mail = $2, role = $3,
+                must_change_password = $4
+          WHERE id = $5
+        RETURNING id, account, mail, role, must_change_password`,
+        [account, mail, finalRole, finalMustChange, id]
       );
     }
     if (rows.length === 0) {

@@ -50,42 +50,69 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <form className="card login-card" onSubmit={handleSubmit}>
+        <div className="login-logo">
+          <i className="fa-solid fa-chart-pie" />
+        </div>
         <h1>會員登入</h1>
-        <div className="error">{error}</div>
+        <p className="login-sub">客戶資料統計管理系統</p>
+
+        {error && (
+          <div className="error">
+            <i className="fa-solid fa-circle-exclamation" />
+            {error}
+          </div>
+        )}
 
         <div className="field">
-          <label>帳號 或 Email</label>
-          <input
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="account 或 mail"
-            autoComplete="username"
-          />
-        </div>
-
-        <div className="field">
-          <label>密碼</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="password"
-            autoComplete="current-password"
-          />
-        </div>
-
-        <div className="field">
-          <label>驗證碼（2 小寫字母 + 4 數字）</label>
-          <div className="captcha-row">
+          <label>
+            <i className="fa-solid fa-user" />
+            帳號 或 Email
+          </label>
+          <div className="input-icon">
+            <i className="fa-solid fa-at" />
             <input
               type="text"
-              value={captcha}
-              onChange={(e) => setCaptcha(e.target.value)}
-              placeholder="請輸入圖中 6 碼"
-              maxLength={6}
-              style={{ flex: 1 }}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="請輸入 account 或 mail"
+              autoComplete="username"
             />
+          </div>
+        </div>
+
+        <div className="field">
+          <label>
+            <i className="fa-solid fa-lock" />
+            密碼
+          </label>
+          <div className="input-icon">
+            <i className="fa-solid fa-key" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="請輸入密碼"
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
+
+        <div className="field">
+          <label>
+            <i className="fa-solid fa-shield-halved" />
+            驗證碼
+          </label>
+          <div className="captcha-row">
+            <div className="input-icon">
+              <i className="fa-solid fa-pen" />
+              <input
+                type="text"
+                value={captcha}
+                onChange={(e) => setCaptcha(e.target.value)}
+                placeholder="圖中 6 碼"
+                maxLength={6}
+              />
+            </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="captcha-img"
@@ -95,10 +122,24 @@ export default function LoginPage() {
               title="點擊更換驗證碼"
             />
           </div>
+          <div className="captcha-hint">
+            <i className="fa-solid fa-rotate" />
+            2 個小寫英文 + 4 個數字，點圖可更換
+          </div>
         </div>
 
         <button className="btn btn-block" type="submit" disabled={loading}>
-          {loading ? "登入中…" : "登入"}
+          {loading ? (
+            <>
+              <i className="fa-solid fa-spinner fa-spin" />
+              登入中…
+            </>
+          ) : (
+            <>
+              <i className="fa-solid fa-right-to-bracket" />
+              登入
+            </>
+          )}
         </button>
       </form>
     </div>

@@ -9,9 +9,16 @@ interface Member {
   account: string;
   mail: string;
   role: "sales" | "admin";
+  must_change_password: boolean;
 }
 
-const emptyForm = { account: "", mail: "", password: "", role: "sales" };
+const emptyForm = {
+  account: "",
+  mail: "",
+  password: "",
+  role: "sales",
+  mustChange: true,
+};
 
 export default function AdminClient({ meId }: { meId: number }) {
   const router = useRouter();
@@ -41,8 +48,15 @@ export default function AdminClient({ meId }: { meId: number }) {
 
   const startEdit = (m: Member) => {
     setEditingId(m.id);
-    setForm({ account: m.account, mail: m.mail, password: "", role: m.role });
+    setForm({
+      account: m.account,
+      mail: m.mail,
+      password: "",
+      role: m.role,
+      mustChange: m.must_change_password,
+    });
     setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -80,68 +94,138 @@ export default function AdminClient({ meId }: { meId: number }) {
     await load();
   };
 
+  const adminCount = members.filter((m) => m.role === "admin").length;
+
   return (
     <div className="container">
       <div className="topbar">
-        <h2>會員管理</h2>
+        <h2>
+          <i className="fa-solid fa-users-gear" />
+          會員管理
+          <span className="who">
+            <i className="fa-solid fa-user-group" />
+            共 {members.length} 位 · admin {adminCount} 位
+          </span>
+        </h2>
         <div className="actions">
-          <button className="btn secondary" onClick={() => router.push("/showdata")}>
+          <button
+            className="btn secondary"
+            onClick={() => router.push("/showdata")}
+          >
+            <i className="fa-solid fa-arrow-left" />
             返回統計
           </button>
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 24 }}>
-        <h3 style={{ marginBottom: 4 }}>
+      <div
+        className="card reveal"
+        style={{ marginBottom: 22, animationDelay: "60ms" }}
+      >
+        <h3 className="section-title">
+          <i
+            className={
+              editingId ? "fa-solid fa-user-pen" : "fa-solid fa-user-plus"
+            }
+          />
           {editingId ? `編輯會員 #${editingId}` : "新增會員"}
         </h3>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
-          {PASSWORD_RULE}
-          {!editingId && "；新帳號首次登入時會被要求自行變更密碼。"}
+        <p className="hint">
+          <i className="fa-solid fa-circle-info" />
+          {PASSWORD_RULE}；勾選「強制變更」後，該會員下次登入必須自行設定新密碼。
         </p>
-        <div className="error">{error}</div>
+
+        {error && (
+          <div className="error">
+            <i className="fa-solid fa-circle-exclamation" />
+            {error}
+          </div>
+        )}
+
         <form onSubmit={submit}>
           <div className="form-row">
             <div className="field">
-              <label>account</label>
+              <label>
+                <i className="fa-solid fa-user" />
+                account
+              </label>
               <input
                 value={form.account}
                 onChange={(e) => setForm({ ...form, account: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>mail</label>
-              <input
-                type="email"
-                value={form.mail}
-                onChange={(e) => setForm({ ...form, mail: e.target.value })}
+                placeholder="登入帳號"
               />
             </div>
             <div className="field">
               <label>
-                password {editingId && <small>(留空則不變更)</small>}
+                <i className="fa-solid fa-envelope" />
+                mail
+              </label>
+              <input
+                type="email"
+                value={form.mail}
+                onChange={(e) => setForm({ ...form, mail: e.target.value })}
+                placeholder="電子郵件"
+              />
+            </div>
+            <div className="field">
+              <label>
+                <i className="fa-solid fa-key" />
+                password{" "}
+                {editingId && (
+                  <span style={{ fontWeight: 400, color: "#94a3b8" }}>
+                    (留空不變更)
+                  </span>
+                )}
               </label>
               <input
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder={editingId ? "不變更請留空" : "初始密碼"}
               />
             </div>
-            <div className="field">
-              <label>role</label>
+            <div className="field narrow">
+              <label>
+                <i className="fa-solid fa-user-tag" />
+                role
+              </label>
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #cbd2d9" }}
               >
                 <option value="sales">sales</option>
                 <option value="admin">admin</option>
               </select>
             </div>
-            <div className="field">
+            <div className="field narrow">
+              <label>
+                <i className="fa-solid fa-triangle-exclamation" />
+                首次登入
+              </label>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={form.mustChange}
+                  onChange={(e) =>
+                    setForm({ ...form, mustChange: e.target.checked })
+                  }
+                />
+                強制變更
+              </label>
+            </div>
+            <div className="field narrow">
               <label>&nbsp;</label>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, height: 44, alignItems: "center" }}>
                 <button className="btn" type="submit" disabled={loading}>
+                  <i
+                    className={
+                      loading
+                        ? "fa-solid fa-spinner fa-spin"
+                        : editingId
+                        ? "fa-solid fa-floppy-disk"
+                        : "fa-solid fa-plus"
+                    }
+                  />
                   {editingId ? "更新" : "新增"}
                 </button>
                 {editingId && (
@@ -150,6 +234,7 @@ export default function AdminClient({ meId }: { meId: number }) {
                     type="button"
                     onClick={resetForm}
                   >
+                    <i className="fa-solid fa-xmark" />
                     取消
                   </button>
                 )}
@@ -159,53 +244,99 @@ export default function AdminClient({ meId }: { meId: number }) {
         </form>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>account</th>
-            <th>mail</th>
-            <th>role</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((m) => (
-            <tr key={m.id}>
-              <td>{m.id}</td>
-              <td>{m.account}</td>
-              <td>{m.mail}</td>
-              <td>
-                <span className={`badge ${m.role === "admin" ? "admin" : ""}`}>
-                  {m.role}
-                </span>
-              </td>
-              <td>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="btn small secondary" onClick={() => startEdit(m)}>
-                    編輯
-                  </button>
-                  <button
-                    className="btn small danger"
-                    onClick={() => remove(m.id)}
-                    disabled={m.id === meId}
-                    title={m.id === meId ? "無法刪除自己" : ""}
-                  >
-                    刪除
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          {members.length === 0 && (
-            <tr>
-              <td colSpan={5} style={{ textAlign: "center", color: "#94a3b8" }}>
-                尚無會員
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <div className="table-card reveal" style={{ animationDelay: "160ms" }}>
+        <h3>
+          <i className="fa-solid fa-list-ul" />
+          會員清單
+        </h3>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><i className="fa-solid fa-hashtag" />ID</th>
+                <th><i className="fa-solid fa-user" />account</th>
+                <th><i className="fa-solid fa-envelope" />mail</th>
+                <th><i className="fa-solid fa-user-tag" />role</th>
+                <th><i className="fa-solid fa-key" />需改密碼</th>
+                <th><i className="fa-solid fa-gear" />操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m, i) => (
+                <tr
+                  key={m.id}
+                  className="row-in"
+                  style={{ animationDelay: `${220 + Math.min(i, 24) * 32}ms` }}
+                >
+                  <td>{m.id}</td>
+                  <td>
+                    {m.account}
+                    {m.id === meId && (
+                      <span className="badge ok" style={{ marginLeft: 6 }}>
+                        <i className="fa-solid fa-circle-user" />我
+                      </span>
+                    )}
+                  </td>
+                  <td>{m.mail}</td>
+                  <td>
+                    <span
+                      className={`badge ${m.role === "admin" ? "admin" : ""}`}
+                    >
+                      <i
+                        className={
+                          m.role === "admin"
+                            ? "fa-solid fa-crown"
+                            : "fa-solid fa-user"
+                        }
+                      />
+                      {m.role}
+                    </span>
+                  </td>
+                  <td>
+                    {m.must_change_password ? (
+                      <span className="badge admin">
+                        <i className="fa-solid fa-triangle-exclamation" />是
+                      </span>
+                    ) : (
+                      <span className="badge no">
+                        <i className="fa-solid fa-check" />否
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        className="btn small secondary"
+                        onClick={() => startEdit(m)}
+                      >
+                        <i className="fa-solid fa-pen" />
+                        編輯
+                      </button>
+                      <button
+                        className="btn small danger"
+                        onClick={() => remove(m.id)}
+                        disabled={m.id === meId}
+                        title={m.id === meId ? "無法刪除自己" : "刪除此會員"}
+                      >
+                        <i className="fa-solid fa-trash" />
+                        刪除
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {members.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="empty-row">
+                    <i className="fa-regular fa-folder-open" />
+                    尚無會員
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
