@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { validatePassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 async function requireAdmin() {
   const token = cookies().get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
-  if (!session || session.role !== "admin") return null;
+  // 尚未完成首次改密碼者不得操作管理功能
+  if (!session || session.role !== "admin" || session.mustChange) return null;
   return session;
 }
 
@@ -44,12 +46,19 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  const ruleError = validatePassword(password);
+  if (ruleError) {
+    return NextResponse.json({ error: ruleError }, { status: 400 });
+  }
+
   const finalRole = role === "admin" ? "admin" : "sales";
 
   try {
+    // 新建帳號一律要求首次登入自行變更密碼
     const rows = await query(
-      `INSERT INTO member (account, mail, password, role)
-       VALUES ($1, $2, crypt($3, gen_salt('bf')), $4)
+      `INSERT INTO member (account, mail, password, role, must_change_password)
+       VALUES ($1, $2, crypt($3, gen_salt('bf')), $4, true)
        RETURNING id, account, mail, role`,
       [account, mail, password, finalRole]
     );

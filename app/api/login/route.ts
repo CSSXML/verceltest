@@ -11,6 +11,7 @@ interface MemberRow {
   account: string;
   mail: string;
   role: "sales" | "admin";
+  must_change_password: boolean;
 }
 
 export async function POST(req: NextRequest) {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   let rows: MemberRow[];
   try {
     rows = await query<MemberRow>(
-      `SELECT id, account, mail, role
+      `SELECT id, account, mail, role, must_change_password
          FROM member
         WHERE (account = $1 OR mail = $1)
           AND password = crypt($2, password)
@@ -55,16 +56,20 @@ export async function POST(req: NextRequest) {
   }
 
   const member = rows[0];
+  const mustChange = member.must_change_password === true;
+
   const token = await signSession({
     uid: member.id,
     account: member.account,
     role: member.role,
+    mustChange,
   });
 
   const res = NextResponse.json({
     ok: true,
     role: member.role,
     account: member.account,
+    mustChange,
   });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

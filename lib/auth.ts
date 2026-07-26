@@ -12,6 +12,8 @@ export interface SessionPayload extends JWTPayload {
   uid: number;
   account: string;
   role: "sales" | "admin";
+  /** true 代表尚未完成首次改密碼，只能存取 /change-password */
+  mustChange: boolean;
 }
 
 export const SESSION_COOKIE = "session";
@@ -20,6 +22,7 @@ export async function signSession(payload: {
   uid: number;
   account: string;
   role: "sales" | "admin";
+  mustChange: boolean;
 }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })

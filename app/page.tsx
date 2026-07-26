@@ -37,7 +37,7 @@ export default function LoginPage() {
         refreshCaptcha();
         return;
       }
-      router.push("/showdata");
+      router.push(data.mustChange ? "/change-password" : "/showdata");
       router.refresh();
     } catch {
       setError("網路錯誤，請稍後再試");

@@ -56,6 +56,8 @@ WHERE (account = $1 OR mail = $1)
 | 路徑 | 方法 | 權限 | 說明 |
 |------|------|------|------|
 | `/` | GET | 公開 | 登入頁（account/mail、password、驗證碼圖） |
+| `/change-password` | GET | 登入 | 首次登入強制變更密碼頁 |
+| `/api/change-password` | POST | 登入 | 驗證強度後更新密碼，並解除 must_change_password |
 | `/api/captcha` | GET | 公開 | 產生 6 碼 SVG 驗證碼，答案存簽章 cookie |
 | `/api/login` | POST | 公開 | 驗證碼 → 帳密 → 發 JWT cookie |
 | `/api/logout` | POST | 登入 | 清除 cookie |
@@ -67,6 +69,14 @@ WHERE (account = $1 OR mail = $1)
 存取控制：Next.js `middleware.ts` 驗證 JWT cookie；`/showdata` 需有效 token，`/admin` 與 `/api/members*` 另需 `role = admin`。
 
 ---
+
+## 4.1 首次登入強制變更密碼
+
+- `member` 表新增 `must_change_password BOOLEAN NOT NULL DEFAULT true`（見 `migration.sql`）。
+- 登入成功後，該旗標寫入 JWT。為 `true` 時 middleware 會把 `/showdata`、`/admin` 一律導向 `/change-password`。
+- 密碼規則：**至少 8 碼（含 8 碼），需同時包含大寫英文、小寫英文、數字**；另檢查兩次輸入一致、不可與原密碼相同。
+- 變更成功後以 `crypt(…, gen_salt('bf'))` 寫回、`must_change_password` 設為 false，並重新簽發 session。
+- 管理員於 `/admin` **新增**會員時該旗標為 true；後續**重設**密碼不觸發。
 
 ## 5. 驗證碼設計
 

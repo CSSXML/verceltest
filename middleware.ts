@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 
-// 保護的路由
-const PROTECTED = ["/showdata", "/admin"];
+const PROTECTED = ["/showdata", "/admin", "/change-password"];
 const ADMIN_ONLY = ["/admin"];
+
+const match = (pathname: string, list: string[]) =>
+  list.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  const needsAuth = PROTECTED.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
-  const needsAdmin = ADMIN_ONLY.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
-
-  if (!needsAuth) return NextResponse.next();
+  if (!match(pathname, PROTECTED)) return NextResponse.next();
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
 
+  // 未登入 → 回登入頁
   if (!session) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
@@ -27,7 +23,25 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (needsAdmin && session.role !== "admin") {
+  const onChangePage = pathname === "/change-password";
+
+  // 尚未完成首次改密碼 → 一律導到改密碼頁
+  if (session.mustChange && !onChangePage) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/change-password";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // 已改過密碼卻想再進改密碼頁 → 導回統計頁
+  if (!session.mustChange && onChangePage) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/showdata";
+    return NextResponse.redirect(url);
+  }
+
+  // 非 admin 想進管理頁
+  if (match(pathname, ADMIN_ONLY) && session.role !== "admin") {
     const url = req.nextUrl.clone();
     url.pathname = "/showdata";
     return NextResponse.redirect(url);
@@ -37,5 +51,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/showdata/:path*", "/admin/:path*"],
+  matcher: ["/showdata/:path*", "/admin/:path*", "/change-password/:path*"],
 };

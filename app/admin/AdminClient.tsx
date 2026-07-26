@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { PASSWORD_RULE } from "@/lib/password";
 
 interface Member {
   id: number;
@@ -91,9 +92,13 @@ export default function AdminClient({ meId }: { meId: number }) {
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
-        <h3 style={{ marginBottom: 12 }}>
+        <h3 style={{ marginBottom: 4 }}>
           {editingId ? `編輯會員 #${editingId}` : "新增會員"}
         </h3>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
+          {PASSWORD_RULE}
+          {!editingId && "；新帳號首次登入時會被要求自行變更密碼。"}
+        </p>
         <div className="error">{error}</div>
         <form onSubmit={submit}>
           <div className="form-row">

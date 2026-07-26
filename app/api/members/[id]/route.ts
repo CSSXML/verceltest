@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import { validatePassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 async function requireAdmin() {
   const token = cookies().get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
-  if (!session || session.role !== "admin") return null;
+  // 尚未完成首次改密碼者不得操作管理功能
+  if (!session || session.role !== "admin" || session.mustChange) return null;
   return session;
 }
 
@@ -40,6 +42,14 @@ export async function PUT(
     return NextResponse.json({ error: "account、mail 為必填" }, { status: 400 });
   }
   const finalRole = role === "admin" ? "admin" : "sales";
+
+  // 有填密碼才檢查強度（留空代表不變更）
+  if (password && password.trim() !== "") {
+    const ruleError = validatePassword(password);
+    if (ruleError) {
+      return NextResponse.json({ error: ruleError }, { status: 400 });
+    }
+  }
 
   try {
     let rows;
