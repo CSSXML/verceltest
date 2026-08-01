@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import VisitorCounter from "./VisitorCounter";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -142,6 +143,7 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+      <VisitorCounter />
     </div>
   );
 }
