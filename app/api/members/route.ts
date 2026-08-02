@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function requireAdmin() {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
   // 尚未完成首次改密碼者不得操作管理功能
   if (!session || session.role !== "admin" || session.mustChange) return null;

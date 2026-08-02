@@ -16,7 +16,8 @@ interface Customer {
 }
 
 export default async function ShowDataPage() {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
   const isAdmin = session?.role === "admin";
   const account = session?.account ?? "";

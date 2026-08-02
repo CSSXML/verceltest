@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function requireAdmin() {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
   // 尚未完成首次改密碼者不得操作管理功能
   if (!session || session.role !== "admin" || session.mustChange) return null;
@@ -18,14 +19,15 @@ async function requireAdmin() {
 // 更新會員；password 有填才更新（重新以 pgcrypto 加密）
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin();
   if (!session) {
     return NextResponse.json({ error: "未授權" }, { status: 403 });
   }
 
-  const id = Number(params.id);
+  const { id: rawId } = await params;
+  const id = Number(rawId);
   if (!Number.isInteger(id)) {
     return NextResponse.json({ error: "無效的 id" }, { status: 400 });
   }
@@ -100,14 +102,15 @@ export async function PUT(
 // 刪除會員（不可刪除自己）
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin();
   if (!session) {
     return NextResponse.json({ error: "未授權" }, { status: 403 });
   }
 
-  const id = Number(params.id);
+  const { id: rawId } = await params;
+  const id = Number(rawId);
   if (!Number.isInteger(id)) {
     return NextResponse.json({ error: "無效的 id" }, { status: 400 });
   }
