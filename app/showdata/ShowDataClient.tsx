@@ -133,10 +133,16 @@ export default function ShowDataClient({
         </h2>
         <div className="actions">
           {isAdmin && (
-            <button className="btn" onClick={() => router.push("/admin")}>
-              <i className="fa-solid fa-users-gear" />
-              管理
-            </button>
+            <>
+              <button className="btn" onClick={() => router.push("/admin")}>
+                <i className="fa-solid fa-users-gear" />
+                管理
+              </button>
+              <button className="btn" onClick={() => router.push("/up_photo")}>
+                <i className="fa-solid fa-image" />
+                圖片上傳
+              </button>
+            </>
           )}
           <button className="btn secondary" onClick={handleLogout}>
             <i className="fa-solid fa-right-from-bracket" />
