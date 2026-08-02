@@ -675,6 +675,16 @@ tr:last-child td { border-bottom: none; }
   justify-content: center;
   margin: 1.25rem 0 0;
 }
+.pdf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--brand);
+  word-break: break-all;
+}
+.pdf-link i {
+  flex-shrink: 0;
+}
 
 /* ============ RWD ============ */
 @media (max-width: 900px) {

@@ -112,6 +112,10 @@ export default function AdminClient({ meId }: { meId: number }) {
             <i className="fa-solid fa-image" />
             圖片上傳
           </button>
+          <button className="btn" onClick={() => router.push("/up_pdf")}>
+            <i className="fa-solid fa-file-pdf" />
+            PDF 上傳
+          </button>
           <button
             className="btn secondary"
             onClick={() => router.push("/showdata")}

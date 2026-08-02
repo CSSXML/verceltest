@@ -2,31 +2,40 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  PHOTO_PAGE_SIZE,
-  MAX_PHOTO_BYTES,
-  ALLOWED_PHOTO_TYPES,
-} from "@/lib/photos";
+import { PDF_PAGE_SIZE, MAX_PDF_BYTES } from "@/lib/pdfs";
 
-type Photo = { name: string; signedUrl: string; createdAt: string | null };
+type PdfItem = {
+  name: string;
+  signedUrl: string;
+  createdAt: string | null;
+  size: number | null;
+};
 
-export default function UpPhotoClient({ account }: { account: string }) {
+function formatSize(bytes: number | null): string {
+  if (bytes == null || Number.isNaN(Number(bytes))) return "—";
+  const n = Number(bytes);
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export default function UpPdfClient({ account }: { account: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState<FileList | null>(null);
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [pdfs, setPdfs] = useState<PdfItem[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async (p: number) => {
-    const res = await fetch(`/api/photos?page=${p}`);
+    const res = await fetch(`/api/pdfs?page=${p}`);
     const data = await res.json();
     if (!res.ok) {
       setError(data.error || "讀取失敗");
       return;
     }
-    setPhotos(data.photos);
+    setPdfs(data.pdfs);
     setPage(data.page);
     setTotal(data.total);
     setError("");
@@ -40,21 +49,22 @@ export default function UpPhotoClient({ account }: { account: string }) {
     e.preventDefault();
     setError("");
     if (!selected || selected.length === 0) {
-      setError("請選擇圖片");
+      setError("請選擇 PDF");
       return;
     }
 
     for (const file of Array.from(selected)) {
-      if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
-        setError(`${file.name}: 僅支援 jpg / png / webp / gif 格式`);
+      const lower = file.name.toLowerCase();
+      if (!lower.endsWith(".pdf")) {
+        setError(`${file.name}: 僅支援 PDF 格式`);
         return;
       }
       if (file.size <= 0) {
         setError(`${file.name}: 檔案為空`);
         return;
       }
-      if (file.size > MAX_PHOTO_BYTES) {
-        setError(`${file.name}: 單檔不可超過 5MB`);
+      if (file.size > MAX_PDF_BYTES) {
+        setError(`${file.name}: 單檔不可超過 10MB`);
         return;
       }
     }
@@ -63,7 +73,7 @@ export default function UpPhotoClient({ account }: { account: string }) {
     try {
       const form = new FormData();
       Array.from(selected).forEach((f) => form.append("files", f));
-      const res = await fetch("/api/photos", { method: "POST", body: form });
+      const res = await fetch("/api/pdfs", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "上傳失敗");
@@ -71,7 +81,7 @@ export default function UpPhotoClient({ account }: { account: string }) {
       }
       setSelected(null);
       const input = document.getElementById(
-        "photo-input"
+        "pdf-input"
       ) as HTMLInputElement | null;
       if (input) input.value = "";
       await load(1);
@@ -82,7 +92,7 @@ export default function UpPhotoClient({ account }: { account: string }) {
 
   const remove = async (name: string) => {
     if (!confirm(`確定刪除 ${name}？`)) return;
-    const res = await fetch("/api/photos/delete", {
+    const res = await fetch("/api/pdfs/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: name }),
@@ -93,19 +103,19 @@ export default function UpPhotoClient({ account }: { account: string }) {
       return;
     }
     const nextTotal = total - 1;
-    const maxPage = Math.max(1, Math.ceil(nextTotal / PHOTO_PAGE_SIZE));
+    const maxPage = Math.max(1, Math.ceil(nextTotal / PDF_PAGE_SIZE));
     await load(Math.min(page, maxPage));
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PHOTO_PAGE_SIZE));
-  const showPager = total > PHOTO_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(total / PDF_PAGE_SIZE));
+  const showPager = total > PDF_PAGE_SIZE;
 
   return (
     <div className="container">
       <div className="topbar">
         <h2>
-          <i className="fa-solid fa-image" />
-          圖片上傳
+          <i className="fa-solid fa-file-pdf" />
+          PDF 上傳
           <span className="who">
             <i className="fa-solid fa-circle-user" />
             {account}
@@ -116,9 +126,12 @@ export default function UpPhotoClient({ account }: { account: string }) {
             <i className="fa-solid fa-users-gear" />
             返回管理
           </button>
-          <button className="btn secondary" onClick={() => router.push("/up_pdf")}>
-            <i className="fa-solid fa-file-pdf" />
-            PDF 上傳
+          <button
+            className="btn secondary"
+            onClick={() => router.push("/up_photo")}
+          >
+            <i className="fa-solid fa-image" />
+            圖片上傳
           </button>
           <button
             className="btn secondary"
@@ -137,9 +150,9 @@ export default function UpPhotoClient({ account }: { account: string }) {
         </h3>
         <form onSubmit={upload} className="photo-upload-form">
           <input
-            id="photo-input"
+            id="pdf-input"
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="application/pdf,.pdf"
             multiple
             onChange={(e) => setSelected(e.target.files)}
           />
@@ -162,30 +175,58 @@ export default function UpPhotoClient({ account }: { account: string }) {
 
       <div className="card reveal" style={{ animationDelay: "80ms" }}>
         <h3 className="section-title">
-          <i className="fa-solid fa-images" />
-          已上傳圖片
-          <span className="who">共 {total} 張</span>
+          <i className="fa-solid fa-folder-open" />
+          已上傳 PDF
+          <span className="who">共 {total} 個</span>
         </h3>
 
-        {photos.length === 0 ? (
-          <p className="muted">尚無圖片</p>
+        {pdfs.length === 0 ? (
+          <p className="muted">尚無 PDF</p>
         ) : (
-          <div className="photo-grid">
-            {photos.map((p) => (
-              <div className="photo-tile" key={p.name}>
-                <button
-                  type="button"
-                  className="btn secondary del"
-                  title="刪除"
-                  onClick={() => remove(p.name)}
-                >
-                  <i className="fa-solid fa-trash" />
-                </button>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.signedUrl} alt={p.name} />
-                <div className="meta">{p.name}</div>
-              </div>
-            ))}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>檔名</th>
+                  <th>大小</th>
+                  <th>上傳時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pdfs.map((p) => (
+                  <tr key={p.name}>
+                    <td>
+                      <a
+                        href={p.signedUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="pdf-link"
+                      >
+                        <i className="fa-solid fa-file-pdf" />
+                        {p.name}
+                      </a>
+                    </td>
+                    <td>{formatSize(p.size)}</td>
+                    <td>
+                      {p.createdAt
+                        ? new Date(p.createdAt).toLocaleString("zh-TW")
+                        : "—"}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => remove(p.name)}
+                      >
+                        <i className="fa-solid fa-trash" />
+                        刪除
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 

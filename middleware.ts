@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 
-const PROTECTED = ["/showdata", "/admin", "/change-password", "/up_photo"];
-const ADMIN_ONLY = ["/admin", "/up_photo"];
+const PROTECTED = [
+  "/showdata",
+  "/admin",
+  "/change-password",
+  "/up_photo",
+  "/up_pdf",
+];
+const ADMIN_ONLY = ["/admin", "/up_photo", "/up_pdf"];
 
 const match = (pathname: string, list: string[]) =>
   list.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -56,5 +62,6 @@ export const config = {
     "/admin/:path*",
     "/change-password/:path*",
     "/up_photo/:path*",
+    "/up_pdf/:path*",
   ],
 };
