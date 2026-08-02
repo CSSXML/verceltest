@@ -1,10 +1,5 @@
 import { Pool } from "pg";
-
-// 全域重用連線池，避免 serverless 環境每次請求都建立新連線
-declare global {
-  // eslint-disable-next-line no-var
-  var _pgPool: Pool | undefined;
-}
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 /**
  * 注意：pg 在解析 connectionString 時，字串內的 `sslmode` 會覆蓋掉
@@ -12,8 +7,11 @@ declare global {
  * 導致 Supabase 的自簽憑證出現
  * "self-signed certificate in certificate chain" 錯誤。
  * 因此先把 sslmode 從連線字串移除，再自行指定 ssl 設定。
+ *
+ * Cloudflare Workers 不能重用跨 request 的 TCP 連線池，
+ * 生產環境走 Hyperdrive binding；本機 `next dev` fallback 到 POSTGRES_URL。
  */
-function buildConnectionString(raw: string): string {
+function stripSslMode(raw: string): string {
   try {
     const url = new URL(raw);
     url.searchParams.delete("sslmode");
@@ -23,28 +21,52 @@ function buildConnectionString(raw: string): string {
   }
 }
 
-function getPool(): Pool {
-  if (global._pgPool) return global._pgPool;
+type Conn = {
+  connectionString: string;
+  /** Hyperdrive 終端通常不需再自訂 ssl；直連 Supabase 本機開發才要 */
+  ssl?: { rejectUnauthorized: boolean };
+};
+
+async function resolveConnection(): Promise<Conn> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const hd = (env as { HYPERDRIVE?: { connectionString: string } })
+      .HYPERDRIVE;
+    if (hd?.connectionString) {
+      return { connectionString: hd.connectionString };
+    }
+  } catch {
+    // 非 Workers runtime（例如 next dev / 單元測試）
+  }
 
   const raw = process.env.POSTGRES_URL;
   if (!raw) {
-    throw new Error("環境變數 POSTGRES_URL 未設定");
+    throw new Error("環境變數 POSTGRES_URL 未設定（或缺少 HYPERDRIVE binding）");
   }
-
-  const pool = new Pool({
-    connectionString: buildConnectionString(raw),
+  return {
+    connectionString: stripSslMode(raw),
     ssl: { rejectUnauthorized: false },
-    max: 5,
-  });
-
-  global._pgPool = pool;
-  return pool;
+  };
 }
 
 export async function query<T = any>(
   text: string,
   params: any[] = []
 ): Promise<T[]> {
-  const res = await getPool().query(text, params);
-  return res.rows as T[];
+  const conn = await resolveConnection();
+  const pool = new Pool({
+    connectionString: conn.connectionString,
+    ...(conn.ssl ? { ssl: conn.ssl } : {}),
+    // Workers：每 request 一條連線，用完即丟；由 Hyperdrive 負責真正的 pool
+    max: 1,
+    maxUses: 1,
+    allowExitOnIdle: true,
+  });
+
+  try {
+    const res = await pool.query(text, params);
+    return res.rows as T[];
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
