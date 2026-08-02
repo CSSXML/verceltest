@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 
-const PROTECTED = ["/showdata", "/admin", "/change-password"];
-const ADMIN_ONLY = ["/admin"];
+const PROTECTED = ["/showdata", "/admin", "/change-password", "/up_photo"];
+const ADMIN_ONLY = ["/admin", "/up_photo"];
 
 const match = (pathname: string, list: string[]) =>
   list.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -51,5 +51,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/showdata/:path*", "/admin/:path*", "/change-password/:path*"],
+  matcher: [
+    "/showdata/:path*",
+    "/admin/:path*",
+    "/change-password/:path*",
+    "/up_photo/:path*",
+  ],
 };
