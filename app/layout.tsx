@@ -13,6 +13,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-Hant">
+      <head>
+        {/* 預先連線，加快 CDN 載入 */}
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+        {/* Font Awesome 6 圖示庫 */}
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          referrerPolicy="no-referrer"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
