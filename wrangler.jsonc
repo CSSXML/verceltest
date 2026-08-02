@@ -18,7 +18,9 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "66cdf41152aa4ca2a49eefe00c054943"
+      "id": "66cdf41152aa4ca2a49eefe00c054943",
+      // OpenNext deploy / wrangler platform proxy 需要這個欄位；正式環境仍用上面的 id
+      "localConnectionString": "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
     }
   ]
 }
